@@ -1,0 +1,24 @@
+# Welcome to Jekyll!
+#
+# This config file is meant for settings that affect your whole blog, values
+# which you are expected to set up once and rarely need to edit after that.
+# For technical reasons, this file is *NOT* reloaded automatically when you use
+# 'jekyll serve'. If you change this file, please restart the server process.
+
+# Site settings
+title: Assignment 6 - Sequence labelling with recurrent networks
+subtitle: > # ignore newlines until "description:"
+    Assignment web page, summer semester 2020 -
+    <a href="http://www.sfs.uni-tuebingen.de">SfS</a>,
+    <a href="http://uni-tuebingen.de/">University of Tübingen</a>
+description: > # ignore newlines until "baseurl:"
+    Assignment 6 -  Sequence labelling with recurrent networks
+        Statistical Natural Language Processing
+baseurl: ""
+url: "https://snlp2020.github.io/a6"
+github_username:  snlp2020
+encoding: utf-8
+future: true
+
+# Build settings
+markdown: kramdown
