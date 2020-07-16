@@ -2,8 +2,9 @@
 """ Statistical Language Processing (SNLP), Assignment 6
     See <https://snlp2020.github.io/a6/> for detailed instructions.
 
-    <Please insert your name and the honor code here.>
+    Jinghua Xu
 """
+
 
 def read_data(filename, eos='#'):
     """ Read an input file
@@ -20,7 +21,32 @@ def read_data(filename, eos='#'):
                 corresponding character in 'utterances' begins a word (B),
                 '0' indicates that it is inside a word (I).
     """
-    ### Exercise 6.1
+    utterances = []
+    labels = []
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+
+            # utterance
+            utterance = line.replace(" ", "") + eos
+            utterances.append(utterance)
+
+            # label
+            label = []
+            for word in line.split(' '):
+                # beginning of a word
+                label.append(1)
+                # in side of a word
+                inw = [0] * (len(word)-1)
+                label.extend(inw)
+            # end of utterance
+            # ? if eos:
+            label.append(1)
+            labels.append(label)
+
+    return utterances, labels
+
 
 def labels_to_segments(utterances, labels):
     """Return segmented utterances corresponding (B/I) labels,
@@ -46,9 +72,10 @@ def labels_to_segments(utterances, labels):
     segments:  Segmented utterances.
 
     """
-    ### You will need this function to avoid duplicating code for
-    ### the main part that re-segments the test utterances,
-    ### and in the segment() function below.
+    # You will need this function to avoid duplicating code for
+    # the main part that re-segments the test utterances,
+    # and in the segment() function below.
+
 
 def segment(u_train, l_train, u_test):
     """ Train an RNN sequence labeller on the training set, return segmented test set.
@@ -66,7 +93,8 @@ def segment(u_train, l_train, u_test):
     pred_seg:  Predicted segments, a list of list of strings, each
                corresponding to a predicted word.
     """
-    ### Exercise 6.2
+    # Exercise 6.2
+
 
 def evaluate(gold_seg, pred_seg):
     """ Calculate and print out boundary/word/lexicon precision recall and F1 scores.
@@ -80,10 +108,17 @@ def evaluate(gold_seg, pred_seg):
 
     Returns: None
     """
-    ### Exercise 6.3
+    # Exercise 6.3
 
 
 if __name__ == '__main__':
+
+    # test read_data
+    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt')
+    print(u)
+    print(l)
+
+    '''
     # Approximate usage of the exercises (not tested).
     u, l = read_data('br-phono.txt')
 
@@ -94,3 +129,4 @@ if __name__ == '__main__':
     seg_test = segment(u_train, l_train, u_test)
 
     evaluate(labels_to_segments(u_test, l_test), seg_test)
+    '''
