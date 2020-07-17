@@ -41,8 +41,8 @@ def read_data(filename, eos='#'):
                 inw = [0] * (len(word)-1)
                 label.extend(inw)
             # end of utterance
-            # ? if eos:
-            label.append(1)
+            if eos:
+                label.append(1)
             labels.append(label)
 
     return utterances, labels
@@ -93,7 +93,16 @@ def segment(u_train, l_train, u_test):
     pred_seg:  Predicted segments, a list of list of strings, each
                corresponding to a predicted word.
     """
-    # Exercise 6.2
+    # encode data
+
+    # train
+
+    # predict
+
+    # labels to segments
+
+    
+
 
 
 def evaluate(gold_seg, pred_seg):
@@ -112,21 +121,25 @@ def evaluate(gold_seg, pred_seg):
 
 
 if __name__ == '__main__':
-
+    
     # test read_data
-    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt')
+    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt' # , eos=''
+    )
     print(u)
     print(l)
+    
 
-    '''
+'''
     # Approximate usage of the exercises (not tested).
     u, l = read_data('br-phono.txt')
 
+    # train-test split
     train_size = int(0.8 * len(u))
     u_train, l_train = u[:train_size], l[:train_size]
     u_test, l_test = u[train_size:], l[train_size:]
 
+    # train a gated RNN for predicting the boundaries(1/0 tags)
     seg_test = segment(u_train, l_train, u_test)
 
     evaluate(labels_to_segments(u_test, l_test), seg_test)
-    '''
+'''
