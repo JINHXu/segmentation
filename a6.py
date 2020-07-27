@@ -76,6 +76,30 @@ def labels_to_segments(utterances, labels):
     # the main part that re-segments the test utterances,
     # and in the segment() function below.
 
+    segments = []
+    for utterance, label in zip(utterances, labels):
+        # this solution requires an eos
+        eos = True
+        if label[-1] == 0:
+            eos = False
+            label.append(1)
+
+        segment = []
+        # get the indices for slicing utterance
+        indices = [0]
+        for i in range(1, len(label)):
+            if label[i] == 1:
+                start_i = indices.pop()
+                segment.append(utterance[start_i:i])
+                indices.append(i)
+
+        # eos
+        if eos:
+            segment.append(utterance[-1])
+
+        segments.append(segment)
+    return segments
+
 
 def segment(u_train, l_train, u_test):
     """ Train an RNN sequence labeller on the training set, return segmented test set.
@@ -101,9 +125,6 @@ def segment(u_train, l_train, u_test):
 
     # labels to segments
 
-    
-
-
 
 def evaluate(gold_seg, pred_seg):
     """ Calculate and print out boundary/word/lexicon precision recall and F1 scores.
@@ -121,13 +142,16 @@ def evaluate(gold_seg, pred_seg):
 
 
 if __name__ == '__main__':
-    
+
     # test read_data
-    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt' # , eos=''
-    )
+    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'  # , eos=''
+                     )
     print(u)
     print(l)
-    
+
+    # test labels_to_segments
+    print(labels_to_segments(u, l))
+
 
 '''
     # Approximate usage of the exercises (not tested).
