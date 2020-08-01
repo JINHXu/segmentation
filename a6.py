@@ -9,8 +9,7 @@ from sklearn import preprocessing
 
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM
-
+from keras.layers import Dense, Embedding, LSTM, Masking
 
 
 def read_data(filename, eos='#'):
@@ -185,8 +184,6 @@ class WordEncoder:
         return np.array(encoded_words)
 
 
-
-
 def labels_to_segments(utterances, labels):
     """Return segmented utterances corresponding (B/I) labels,
 
@@ -259,53 +256,38 @@ def segment(u_train, l_train, u_test):
     # encode words
     we = WordEncoder()
     we.fit(u_train)
-    encoded_u_train = we.transform(u_train, flat=False)
-    '''
-    print(encoded_u_train)
-    print(encoded_u_train.shape)
-    print(we._char2idx)
+    encoded_u_train = we.transform(u_train, pad='left', flat=False)
 
-    print(l_train)
-    print(type(l_train))
-    '''
-
+    batch, timesteps, featurelen = encoded_u_train.shape
 
     # pad labels
-    for l in l_train:
-        if len(l) < encoded_u_train.shape[1]:
-            l.extend([2]*(encoded_u_train.shape[1]-len(l)))
-    
-    l_train = np.array(l_train)
+    padded_l_train = keras.preprocessing.sequence.pad_sequences(l_train)
 
-    '''
-    print(len(l_train[0]))
-    print(len(l_train[1]))
-    print(len(l_train[2]))
-    '''
+    print(padded_l_train)
 
-    output_dim = l_train.shape[1]
+    output_dim = padded_l_train.shape[1]
 
     # train
     grnn = Sequential()
-    grnn.add(LSTM(64, input_shape=(
-        encoded_u_train.shape[1], encoded_u_train.shape[2]), activation='relu'))
-    grnn.add(Dense(output_dim, activation='softmax'))
+    grnn.add(Masking(input_shape=(timesteps, featurelen)))
+    '''
+    The number of hidden neurons should be between the size of the input layer and the size of the output layer. 
+    The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. 
+    The number of hidden neurons should be less than twice the size of the input layer.
+    '''
+    grnn.add(LSTM(64, activation='relu'))
+    grnn.add(Dense(output_dim, activation='sigmoid'))
 
     grnn.compile(optimizer='adam',
-                loss='categorical_crossentropy',
-                metrics=['accuracy'])
-    
-    grnn.fit(encoded_u_train, l_train)
+                 loss='binary_crossentropy',
+                 metrics=['accuracy'])
+
+    grnn.fit(encoded_u_train, padded_l_train)
 
     # predict
-
-    # encode test utterance
-    encoded_u_test = we.transform(u_test, flat = False)
-
+    encoded_u_test = we.transform(u_test, flat=False)
     l_test_pred = grnn.predict(encoded_u_test)
     print(l_test_pred)
-
-    # get rid of the tailling padded numbers?
 
     # labels to segments
     pred_seg = labels_to_segments(u_test, l_test_pred)
@@ -324,13 +306,21 @@ def evaluate(gold_seg, pred_seg):
 
     Returns: None
     """
-    # Exercise 6.3
+    # boundaries
+    gold_bd = []
+    pred_bd = []
+    for
 
 
 if __name__ == '__main__':
 
-    
+    # test evaluate
+    pred_seg = [["night", "night", "#"], ["daddy#"], ["ak", "itty", "#"]]
+    gold_seg = [["night", "night", "#"], ["daddy", "#"], ["a" "kitty", "#"]]
 
+    evaluate(gold_seg, pred_seg)
+
+    '''
     # test read_data
     u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'  # , eos=''
                      )
@@ -339,7 +329,7 @@ if __name__ == '__main__':
 
     segment(u, l, u)
 
-    '''
+    
 
     # test labels_to_segments
     print(labels_to_segments(u, l))
