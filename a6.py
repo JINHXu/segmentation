@@ -7,9 +7,10 @@
 import numpy as np
 from sklearn import preprocessing
 
+
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM, Masking
+from keras.layers import Dense, LSTM, Masking, TimeDistributed, GRU
 
 from sklearn.metrics import f1_score, precision_score, recall_score
 
@@ -271,14 +272,25 @@ def segment(u_train, l_train, u_test):
 
     # train
     grnn = Sequential()
-    grnn.add(Masking(input_shape=(timesteps, featurelen)))
+    # grnn.add(TimeDistributed(LSTM(64))(Masking(input_shape=(timesteps, featurelen))))
+
+    # grnn.add(Masking(input_shape=(timesteps, featurelen)))
     '''
     The number of hidden neurons should be between the size of the input layer and the size of the output layer. 
     The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. 
     The number of hidden neurons should be less than twice the size of the input layer.
     '''
-    grnn.add(LSTM(64, activation='relu'))
+
+    grnn.add(LSTM(64 # , return_sequences = True #n, activation='relu'
+    ))
+    grnn.add(TimeDistributed(tf.keras.layers.Conv2D(64, (featurelen, featurelen)))(tf.keras.Input(shape=(timesteps, featurelen))))
+    # grnn.add(TimeDistributed(Dense(1)))
+    # grnn.add(GRU(64))
+    # grnn.add(TimeDistributed(LSTM(64)))
+    # Dense(output_dim, activation='sigmoid')
+
     grnn.add(Dense(output_dim, activation='sigmoid'))
+    
 
     grnn.compile(optimizer='adam',
                  loss='binary_crossentropy',
@@ -416,6 +428,7 @@ def evaluate(gold_seg, pred_seg):
 
     # print statistics
     print('Evaluation:\n')
+
     print(f'Boundary precision: {bp}')
     print(f'Boundary recall: {br}')
     print(f'Boundary F1: {bf1}\n')
@@ -431,13 +444,16 @@ def evaluate(gold_seg, pred_seg):
 
 if __name__ == '__main__':
 
+    '''
+
     # test evaluate
     pred_seg = [["night", "night", "#"], ["daddy#"], ["ak", "itty", "#"]]
     gold_seg = [["night", "night", "#"], ["daddy", "#"], ["a", "kitty", "#"]]
 
     evaluate(gold_seg, pred_seg)
-
     '''
+
+    
     # test read_data
     u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'  # , eos=''
                      )
@@ -445,6 +461,8 @@ if __name__ == '__main__':
     print(l)
 
     segment(u, l, u)
+
+    '''
 
     
 
