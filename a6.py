@@ -10,7 +10,7 @@ from sklearn import preprocessing
 import tensorflow as tf
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Masking, TimeDistributed, GRU
+from keras.layers import Dense, LSTM, Masking, TimeDistributed, Flatten
 
 from sklearn.metrics import f1_score, precision_score, recall_score
 
@@ -261,7 +261,7 @@ def segment(u_train, l_train, u_test):
     we.fit(u_train)
     encoded_u_train = we.transform(u_train, pad='left', flat=False)
 
-    batch, timesteps, featurelen = encoded_u_train.shape
+    _, timesteps, featurelen = encoded_u_train.shape
 
     # pad labels
     padded_l_train = keras.preprocessing.sequence.pad_sequences(l_train)
@@ -272,41 +272,40 @@ def segment(u_train, l_train, u_test):
 
     # train
     grnn = Sequential()
-    # grnn.add(TimeDistributed(LSTM(64))(Masking(input_shape=(timesteps, featurelen))))
-
-    # grnn.add(Masking(input_shape=(timesteps, featurelen)))
     '''
     The number of hidden neurons should be between the size of the input layer and the size of the output layer. 
     The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. 
     The number of hidden neurons should be less than twice the size of the input layer.
     '''
-
-    grnn.add(LSTM(64 # , return_sequences = True #n, activation='relu'
-    ))
-    grnn.add(TimeDistributed(tf.keras.layers.Conv2D(64, (featurelen, featurelen)))(tf.keras.Input(shape=(timesteps, featurelen))))
-    # grnn.add(TimeDistributed(Dense(1)))
-    # grnn.add(GRU(64))
-    # grnn.add(TimeDistributed(LSTM(64)))
-    # Dense(output_dim, activation='sigmoid')
-
+    grnn.add(Masking(input_shape=(timesteps, featurelen)))
+    grnn.add(LSTM(64))
     grnn.add(Dense(output_dim, activation='sigmoid'))
-    
-
     grnn.compile(optimizer='adam',
                  loss='binary_crossentropy',
                  metrics=['accuracy'])
-    grnn.summary()
-
     grnn.fit(encoded_u_train, padded_l_train)
 
     # predict
     encoded_u_test = we.transform(u_test, flat=False)
     l_test_pred = grnn.predict(encoded_u_test)
-    print(l_test_pred)
+    # process output
+    bi_opt = []
+    for seq, label in zip(u_test, l_test_pred):
+        label = label[-len(seq):]
+        tmp = []
+        for l in label:
+            if l >= 0.5:
+                tmp.append(1)
+            else:
+                tmp.append(0) 
+        bi_opt.append(tmp)
+    
+    print(bi_opt)
 
     # labels to segments
-    pred_seg = labels_to_segments(u_test, l_test_pred)
+    pred_seg = labels_to_segments(u_test, bi_opt)
     print(pred_seg)
+
 
     return pred_seg
 
@@ -455,7 +454,7 @@ if __name__ == '__main__':
 
     
     # test read_data
-    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'  # , eos=''
+    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'   , eos=''
                      )
     print(u)
     print(l)
