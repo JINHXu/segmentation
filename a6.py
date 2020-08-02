@@ -11,6 +11,8 @@ import keras
 from keras.models import Sequential
 from keras.layers import Dense, Embedding, LSTM, Masking
 
+from sklearn.metrics import f1_score, precision_score, recall_score
+
 
 def read_data(filename, eos='#'):
     """ Read an input file
@@ -281,6 +283,7 @@ def segment(u_train, l_train, u_test):
     grnn.compile(optimizer='adam',
                  loss='binary_crossentropy',
                  metrics=['accuracy'])
+    grnn.summary()
 
     grnn.fit(encoded_u_train, padded_l_train)
 
@@ -292,6 +295,8 @@ def segment(u_train, l_train, u_test):
     # labels to segments
     pred_seg = labels_to_segments(u_test, l_test_pred)
     print(pred_seg)
+
+    return pred_seg
 
 
 def evaluate(gold_seg, pred_seg):
@@ -306,17 +311,129 @@ def evaluate(gold_seg, pred_seg):
 
     Returns: None
     """
-    # boundaries
-    gold_bd = []
-    pred_bd = []
-    for
+    # Our treatment of 'end-of-sequence' symbol(a boundary before the first word or after # should not add to true positives) determines that 'eos' has alway to be assumed non-empty
+    eos = gold_seg[0][-1]
+
+    # get the labels in a flat list
+    gold_l = []
+    pred_l = []
+    for segs in gold_seg:
+        l = []
+        for seg in segs:
+            l.append(1)
+            inw = [0] * (len(seg)-1)
+            l.extend(inw)
+        # credit no boundaries before the first word or after #
+        l.pop(0)
+        gold_l.extend(l)
+    for segs in pred_seg:
+        l = []
+        for seg in segs:
+            l.append(1)
+            inw = [0] * (len(seg)-1)
+            l.extend(inw)
+        # credit no boundaries before the first word or after #
+        l.pop(0)
+        pred_l.extend(l)
+
+    # boundary scores
+    bp = precision_score(gold_l, pred_l)
+    br = recall_score(gold_l, pred_l)
+    bf1 = f1_score(gold_l, pred_l)
+
+    # words TP + FP(word precision denominator): number of words in pred_seg disregard of the 'end-of-sequence' symbol
+    word_tpnfp = 0
+    for s in pred_seg:
+        word_tpnfp += len(s)
+        if s[-1] == eos:
+            word_tpnfp -= 1
+
+    # words TP + FN(word recall denominator): number of words in gold_seg disregard of the 'end-of-sequence' symbol
+    word_tpnfn = 0
+    for s in gold_seg:
+        word_tpnfn += len(s)-1
+
+    # words TP
+    word_tp = 0
+    # get a list of boundaries
+    pred_b = []
+    left_b = 0
+    right_b = 0
+    for s in pred_seg:
+        for w in s:
+            # it is assumed the data is free of 'eos'
+            if w == eos:
+                # 'eos' does not count towards TP
+                continue
+            right_b = left_b + len(w) - 1
+            pred_b.append((left_b, right_b))
+            left_b = right_b + 1
+
+    gold_b = []
+    left_b = 0
+    right_b = 0
+    for s in gold_seg:
+        for w in s:
+            # it is assumed the data is free of 'eos'
+            if w == eos:
+                # 'eos' does not count towards TP
+                continue
+            right_b = left_b + len(w) - 1
+            gold_b.append((left_b, right_b))
+            left_b = right_b + 1
+
+    for bd in gold_b:
+        if bd in pred_b:
+            word_tp += 1
+
+    wp = word_tp/word_tpnfp
+    wr = word_tp/word_tpnfn
+    wf1 = (2*wp*wr)/(wp+wr)
+
+    # get lexicon
+    gold_lexicon = set()
+    pred_lexicon = set()
+
+    for s in gold_seg:
+        for w in s:
+            if w == eos:
+                continue
+            gold_lexicon.add(w)
+
+    for s in pred_seg:
+        for w in s:
+            if w == eos:
+                continue
+            pred_lexicon.add(w)
+
+    lexicon_tp = len(gold_lexicon & pred_lexicon)
+    lexicon_fp = len(pred_lexicon-gold_lexicon)
+    lexicon_fn = len(gold_lexicon-pred_lexicon)
+
+    lp = lexicon_tp/(lexicon_tp+lexicon_fp)
+    lr = lexicon_tp/(lexicon_tp+lexicon_fn)
+    lf1 = (2*lp*lr)/(lp+lr)
+
+    # print statistics
+    print('Evaluation:\n')
+    print(f'Boundary precision: {bp}')
+    print(f'Boundary recall: {br}')
+    print(f'Boundary F1: {bf1}\n')
+
+    print(f'Word precision: {wp}')
+    print(f'Word recall: {wr}')
+    print(f'Word F1: {wf1}\n')
+
+    print(f'Lexicon precision: {lp}')
+    print(f'Lexicon recall: {lr}')
+    print(f'Lexicon F1: {lf1}\n')
 
 
 if __name__ == '__main__':
 
     # test evaluate
     pred_seg = [["night", "night", "#"], ["daddy#"], ["ak", "itty", "#"]]
-    gold_seg = [["night", "night", "#"], ["daddy", "#"], ["a" "kitty", "#"]]
+    gold_seg = [["night", "night", "#"], ["daddy", "#"], ["a", "kitty", "#"]]
 
     evaluate(gold_seg, pred_seg)
 
@@ -334,18 +451,8 @@ if __name__ == '__main__':
     # test labels_to_segments
     print(labels_to_segments(u, l))
     
-
-
-
-    
     # Approximate usage of the exercises (not tested).
     u, l = read_data('br-phono.txt')
-
-
-
-
-
-    
 
     # train-test split
     train_size = int(0.8 * len(u))
