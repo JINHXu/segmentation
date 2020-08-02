@@ -7,7 +7,7 @@
 import numpy as np
 from sklearn import preprocessing
 
-
+import tensorflow as tf
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Masking, TimeDistributed, GRU
