@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 """ Statistical Language Processing (SNLP), Assignment 6
     See <https://snlp2020.github.io/a6/> for detailed instructions.
-
-    Jinghua Xu
+    Course:      Statistical Language processing - SS2020
+    Assignment:  a6
+    Author(s):   Lisa Seneberg, Jinghua Xu
+    Description: segementation with gated rnn
+ 
+ Honor Code:  I pledge that this program represents my own work.
 """
 import numpy as np
 from sklearn import preprocessing
@@ -10,7 +14,7 @@ from sklearn import preprocessing
 import tensorflow as tf
 import keras
 from keras.models import Sequential
-from keras.layers import Dense, LSTM, Masking, TimeDistributed, Flatten
+from keras.layers import Dense, LSTM, Masking
 
 from sklearn.metrics import f1_score, precision_score, recall_score
 
@@ -261,33 +265,32 @@ def segment(u_train, l_train, u_test):
     we.fit(u_train)
     encoded_u_train = we.transform(u_train, pad='left', flat=False)
 
-    _, timesteps, featurelen = encoded_u_train.shape
-
     # pad labels
     padded_l_train = keras.preprocessing.sequence.pad_sequences(l_train)
 
-    print(padded_l_train)
-
+    _, timesteps, featurelen = encoded_u_train.shape
     output_dim = padded_l_train.shape[1]
 
     # train
     grnn = Sequential()
-    '''
-    The number of hidden neurons should be between the size of the input layer and the size of the output layer. 
-    The number of hidden neurons should be 2/3 the size of the input layer, plus the size of the output layer. 
-    The number of hidden neurons should be less than twice the size of the input layer.
-    '''
+
     grnn.add(Masking(input_shape=(timesteps, featurelen)))
+    # a conventional choice of number of hidden units
     grnn.add(LSTM(64))
     grnn.add(Dense(output_dim, activation='sigmoid'))
+
     grnn.compile(optimizer='adam',
                  loss='binary_crossentropy',
                  metrics=['accuracy'])
+
+    grnn.summary()
+
     grnn.fit(encoded_u_train, padded_l_train)
 
     # predict
     encoded_u_test = we.transform(u_test, flat=False)
     l_test_pred = grnn.predict(encoded_u_test)
+
     # process output
     bi_opt = []
     for seq, label in zip(u_test, l_test_pred):
@@ -297,16 +300,12 @@ def segment(u_train, l_train, u_test):
             if l >= 0.5:
                 tmp.append(1)
             else:
-                tmp.append(0) 
+                tmp.append(0)
         bi_opt.append(tmp)
-    
-    print(bi_opt)
 
     # labels to segments
     pred_seg = labels_to_segments(u_test, bi_opt)
-    print(pred_seg)
-
-
+    
     return pred_seg
 
 
@@ -442,42 +441,13 @@ def evaluate(gold_seg, pred_seg):
 
 
 if __name__ == '__main__':
-
-    '''
-
-    # test evaluate
-    pred_seg = [["night", "night", "#"], ["daddy#"], ["ak", "itty", "#"]]
-    gold_seg = [["night", "night", "#"], ["daddy", "#"], ["a", "kitty", "#"]]
-
-    evaluate(gold_seg, pred_seg)
-    '''
-
-    
-    # test read_data
-    u, l = read_data('/Users/xujinghua/a6-lahmy98-jinhxu/readdata_test.txt'   , eos=''
-                     )
-    print(u)
-    print(l)
-
-    segment(u, l, u)
-
-    '''
-
-    
-
-    # test labels_to_segments
-    print(labels_to_segments(u, l))
-    
     # Approximate usage of the exercises (not tested).
     u, l = read_data('br-phono.txt')
 
-    # train-test split
     train_size = int(0.8 * len(u))
     u_train, l_train = u[:train_size], l[:train_size]
     u_test, l_test = u[train_size:], l[train_size:]
 
-    # train a gated RNN for predicting the boundaries(1/0 tags)
     seg_test = segment(u_train, l_train, u_test)
 
     evaluate(labels_to_segments(u_test, l_test), seg_test)
-'''
