@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-""" Statistical Language Processing (SNLP), Assignment 6
-    See <https://snlp2020.github.io/a6/> for detailed instructions.
+""" 
+    https://snlp2020.github.io/a6
     Course:      Statistical Language processing - SS2020
     Assignment:  a6
-    Author(s):   Lisa Seneberg, Jinghua Xu
+    Author: Jinghua Xu
     Description: segementation with gated rnn
  
  Honor Code:  I pledge that this program represents my own work.
@@ -68,13 +68,11 @@ class WordEncoder:
     the words that are shorter are padded with 0-vectors.
     Two special symbols, <s> and </s> (beginning of sequence and
     end of sequence) should be prepended and appended to every word
-    before padding or truncation. You should also reserve a symbol for
+    before padding or truncation, also reserve a symbol for
     unknown characters (distinct from the padding).
     The result is either a 2D vector, where all character vectors
     (including padding) of a word are concatenated as a single vector,
-    o a 3D vector with a separate vector for each character (see
-    the description of 'transform' below and the assignment sheet
-    for more detail.
+    o a 3D vector with a separate vector for each character.
     Parameters:
     -----------
     maxlen:  The length that each word (including <s> and </s>) is padded
@@ -203,9 +201,6 @@ def labels_to_segments(utterances, labels):
     return the segmented utterances similar to:
         [["night", "night", "#"], ["daddy", "#"], ["a", "kitty", "#"]]
 
-    Note that to use it with model predictions, you should assume a
-    number larger than 0.5 in the 'labels' array indicates a boundary.
-
     Parameters:
     -----------
     utterances:  The list of unsegmented utterances.
@@ -215,7 +210,7 @@ def labels_to_segments(utterances, labels):
     segments:  Segmented utterances.
 
     """
-    # You will need this function to avoid duplicating code for
+    # this function to avoid duplicating code for
     # the main part that re-segments the test utterances,
     # and in the segment() function below.
 
@@ -311,8 +306,6 @@ def segment(u_train, l_train, u_test):
 
 def evaluate(gold_seg, pred_seg):
     """ Calculate and print out boundary/word/lexicon precision recall and F1 scores.
-
-    See the assignment sheet for definitions of the metrics.
 
     Parameters:
     -----------
